@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Board from "./Board";
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
+import { PiCoinsLight } from "react-icons/pi";
 
 type BoardArray = Array<Array<string | null>>;
 
@@ -120,7 +121,7 @@ export default function TicTacToe() {
   return (
     <div className="border-2 border-black rounded-2xl py-7 px-28 flex flex-col justify-center items-center gap-2">
       <h1 className="font-bold text-3xl bg-[#FF6347] rounded-xl flex justify-center p-2 absolute top-0 translate-y-16 rotate-6">Tic Tac Toe</h1>
-      <h2 className="text-xl border border-black rounded-2xl px-2">Total ed coins earned: {playerScore}</h2>
+      <div className="text-xl flex justify-center items-center space-x-1 border border-black rounded-2xl px-2 mt-2"><p>Total</p> <PiCoinsLight/><p> ed coins earned: {playerScore}</p></div>
       <Board board={board} handleClick={handleOnClick} />
       {winner && <p>{winner === "X" ? "You Win" : "AI Wins"}</p>}
       {isNoWinner && <p>No one wins</p>}
