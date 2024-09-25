@@ -13,13 +13,13 @@ export default function Board({ board, handleClick }: BoardProps) {
           {row.map((cell, cellIndex) => (
             <button
               key={cellIndex}
-              className={`p-2 bg-white border border-gray-600 ${
+              className={`p-2 bg-color-50 border-2 border-color-1100 ${
                 cell === "X"
-                  ? "text-red-600"
+                  ? "text-red"
                   : cell === "O"
-                  ? "text-blue-600"
+                  ? "text-blue"
                   : ""
-              } w-12 h-12 hover:bg-slate-400 items-center justify-center`}
+              } w-12 h-12 hover:bg-color-800 items-center justify-center`}
               onClick={() => handleClick(rowIndex, cellIndex)}
             >
               {cell}

@@ -4,22 +4,9 @@ import { useState } from "react";
 import Board from "./Board";
 import { Button } from "@/components/ui/button";
 import { PiCoinsLight } from "react-icons/pi";
+import { getCleverMoves } from "./util";
 
 type BoardArray = Array<Array<string | null>>;
-
-const makeComputerMove = (board: BoardArray): [number, number] => {
-  const emptyCells: [number, number][] = [];
-  board.forEach((row, rowIndex) => {
-    row.forEach((cell, cellIndex) => {
-      if (!cell) {
-        emptyCells.push([rowIndex, cellIndex]);
-      }
-    });
-  });
-
-  const randomIndex = Math.floor(Math.random() * emptyCells.length);
-  return emptyCells[randomIndex];
-};
 
 const checkWinner = (board: BoardArray): string | null => {
   const lines = [
@@ -44,18 +31,18 @@ const checkWinner = (board: BoardArray): string | null => {
 };
 
 export default function TicTacToe() {
-  const initialBoard: BoardArray = Array.from(
-    { length: 3 },
-    () => Array(3).fill(null)
+  const initialBoard: BoardArray = Array.from({ length: 3 }, () =>
+    Array(3).fill(null)
   );
   const [board, setBoard] = useState<BoardArray>(initialBoard);
   const [player, setPlayer] = useState<string>("X");
   const [winner, setWinner] = useState<string | null>(null);
   const [isNoWinner, setIsNoWinner] = useState<boolean>(false);
   const [playerScore, setPlayerScore] = useState<number>(0);
+  const [matchCount, setMatchCount] = useState<number>(0);
 
   const handleOnClick = (row: number, col: number) => {
-    if (board[row][col] || winner) {
+    if (board[row][col] || winner || matchCount >= 3) {
       return;
     }
 
@@ -70,11 +57,10 @@ export default function TicTacToe() {
     setWinner(newWinner);
 
     if (newWinner === "X") {
-        setPlayerScore((prevScore) => prevScore + 30);
-        return; // End the player's turn if they win
-      }
-
-    // if (newWinner) return;
+      setPlayerScore((prevScore) => prevScore + 30);
+      setMatchCount((prevCount) => prevCount + 1);
+      return; // End the player's turn if they win
+    }
 
     // Check if there are no empty cells after player's move
     const hasNullValue = updatedPlayerBoard.some((row) =>
@@ -83,35 +69,44 @@ export default function TicTacToe() {
 
     if (!hasNullValue) {
       setIsNoWinner(true);
+      setMatchCount((prevCount) => prevCount + 1);
       return;
     }
 
     // Computer's move
-    const [computerRow, computerCol] = makeComputerMove(updatedPlayerBoard);
-    const updatedComputerBoard = updatedPlayerBoard.map((newRow, rowIndex) =>
-      newRow.map((cell, cellIndex) =>
-        rowIndex === computerRow && cellIndex === computerCol ? "O" : cell
-      )
-    );
+    const nextPlayer = player === "X" ? "O" : "X";
+    const bestMove = getCleverMoves(updatedPlayerBoard, nextPlayer, checkWinner);
 
     setTimeout(() => {
-      setBoard(updatedComputerBoard);
-      const newComputerWinner = checkWinner(updatedComputerBoard);
+      const aiBoard = updatedPlayerBoard.map((r, rowIndex) =>
+        r.map((c, colIndex) =>
+          rowIndex === bestMove?.[0] && colIndex === bestMove[1]
+            ? nextPlayer
+            : c
+        )
+      );
+      setBoard(aiBoard);
+      const newComputerWinner = checkWinner(aiBoard);
       setWinner(newComputerWinner);
 
       if (!newComputerWinner) {
         // Check for draw after computer's move
-        const noNullValue = updatedComputerBoard.some((row) =>
+        const noNullValue = aiBoard.some((row) =>
           row.some((cell) => cell === null)
         );
         if (!noNullValue) {
           setIsNoWinner(true);
+          setMatchCount((prevCount) => prevCount + 1);
         }
       }
     }, 200);
   };
 
   const restartGame = () => {
+    if (matchCount >= 3) {
+      setPlayerScore(0);
+      setMatchCount(0);
+    }
     setBoard(Array.from({ length: 3 }, () => Array(3).fill(null)));
     setPlayer("X");
     setWinner(null);
@@ -119,15 +114,21 @@ export default function TicTacToe() {
   };
 
   return (
-    <div className="border-2 border-black rounded-2xl py-7 px-28 flex flex-col justify-center items-center gap-2">
-      <h1 className="font-bold text-3xl bg-[#FF6347] rounded-xl flex justify-center p-2 absolute top-0 translate-y-16 rotate-6">Tic Tac Toe</h1>
-      <div className="text-xl flex justify-center items-center space-x-1 border border-black rounded-2xl px-2 mt-2"><p>Total</p> <PiCoinsLight/><p> ed coins earned: {playerScore}</p></div>
+    <div className="bg-white border-2 border-black rounded-2xl py-7 px-28 flex flex-col justify-center items-center gap-2">
+      <h1 className="font-bold text-3xl bg-color-150 rounded-xl flex justify-center p-2 absolute top-0 translate-y-16 rotate-6">
+        Tic Tac Toe
+      </h1>
+      <div className="text-xl flex justify-center items-center space-x-1 border border-color-1100 rounded-2xl px-2 mt-2">
+        <p>Total</p> <PiCoinsLight />
+        <p> ed coins earned: {playerScore}</p>
+      </div>
       <Board board={board} handleClick={handleOnClick} />
-      {winner && <p>{winner === "X" ? "You Win" : "AI Wins"}</p>}
-      {isNoWinner && <p>No one wins</p>}
+      <p>Winner:{winner && <p>{winner === "X" ? "You" : "AI"}</p>}
+      {isNoWinner && <p>No one wins</p>}</p>
       <Button variant="destructive" onClick={restartGame}>
-        Reset
+        {matchCount >= 3 ? "Reset Game" : "Reset"}
       </Button>
+      <p>Matches Played: {matchCount}/3</p>
     </div>
   );
 }
